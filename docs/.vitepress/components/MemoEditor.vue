@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
+import { slugify } from '../util/slugify'
 import type { MemoData } from '../types'
 
 // markdown-it の初期化
@@ -30,8 +31,16 @@ const statusMessage = ref('')
 const lastSavedPath = ref('')
 const saving = ref(false)
 
-// ページ読み込み時にキャッシュから復元
+// 未保存の変更がある場合の離脱防止
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
 onMounted(() => {
+  // キャッシュから復元
   const saved = localStorage.getItem('memo_draft_cache')
   if (saved) {
     const { t, tg, c, p } = JSON.parse(saved)
@@ -40,6 +49,12 @@ onMounted(() => {
     content.value = c || ''
     lastSavedPath.value = p || ''
   }
+
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 const renderedContent = computed(() => md.render(content.value))
@@ -59,8 +74,6 @@ watch([title, tags, content, lastSavedPath], () => {
     isDirty.value = true
   }
 })
-
-const slugify = (text: string) => text.trim().toLowerCase().replace(/\s+/g, '-')
 
 const saveMemo = async () => {
   if (!title.value || !content.value) {
@@ -137,59 +150,80 @@ const deleteMemo = (force = false) => {
 
 <template>
   <div class="memo-editor-container">
-    <div class="editor-pane">
-      <div class="field">
+    <!-- メタデータ入力エリア -->
+    <div class="editor-meta-pane">
+      <div class="editor-field">
         <label>タイトル</label>
         <input v-model="title" type="text" placeholder="メモのタイトルを入力" />
       </div>
-      <div class="field">
+      <div class="editor-field">
         <label>タグ</label>
         <input v-model="tags" type="text" placeholder="タグをカンマ区切りで入力" />
       </div>
-      <div class="field">
-        <label>内容 (Markdown)</label>
-        <textarea v-model="content" placeholder="Markdown形式で入力"></textarea>
-      </div>
-      <div class="actions">
-        <button @click="saveMemo" class="btn save-btn" :disabled="saving">1. 下書き保存</button>
-        <button @click="pushToGit" class="btn push-btn" :disabled="saving || !lastSavedPath">2. コミット & Push</button>
-        <button @click="deleteMemo(false)" class="btn delete-btn">削除</button>
-      </div>
-      <p v-if="statusMessage" class="status-bar">{{ statusMessage }}</p>
     </div>
-    <div class="preview-pane">
-      <h3>プレビュー</h3>
-      <div class="preview-content vp-doc" v-html="renderedContent"></div>
+
+    <!-- メイン編集・プレビューエリア -->
+    <div class="editor-grid">
+      <div class="editor-content-pane">
+        <div class="editor-field">
+          <label>内容 (Markdown)</label>
+          <textarea v-model="content" placeholder="Markdown形式で入力"></textarea>
+        </div>
+        <div class="editor-actions">
+          <button @click="saveMemo" class="editor-btn save-btn" :disabled="saving">1. 下書き保存</button>
+          <button @click="pushToGit" class="editor-btn push-btn" :disabled="saving || !lastSavedPath">2. コミット & Push</button>
+          <button @click="deleteMemo(false)" class="editor-btn delete-btn">削除</button>
+        </div>
+      </div>
+
+      <div class="preview-pane">
+        <div class="editor-field">
+          <label>プレビュー</label>
+          <div class="preview-content vp-doc" v-html="renderedContent"></div>
+        </div>
+        <div class="editor-actions-spacer"></div>
+      </div>
     </div>
+    <p v-if="statusMessage" class="editor-status">{{ statusMessage }}</p>
   </div>
 </template>
 
 <style scoped>
 /* Editor Styles */
-.memo-editor-container { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
+.memo-editor-container { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; padding-bottom: 40px; }
+.editor-grid { display: flex; flex-direction: column; gap: 20px; }
+
 @media (min-width: 1024px) {
-  .memo-editor-container { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .editor-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
 }
-.editor-pane, .preview-pane {
+
+.editor-meta-pane, .editor-content-pane, .preview-pane {
   border: 1px solid var(--vp-c-divider); padding: 20px; border-radius: 8px;
   background: var(--vp-c-bg-soft); display: flex; flex-direction: column;
 }
-.field { margin-bottom: 15px; }
-.field label { display: block; margin-bottom: 5px; font-weight: bold; }
-.field input, .field textarea {
+
+.editor-field { margin-bottom: 15px; }
+.editor-field label { display: block; margin-bottom: 5px; font-weight: bold; }
+.editor-field input, .editor-field textarea {
   width: 100%; padding: 10px; border: 1px solid var(--vp-c-bg-alt);
   border-radius: 4px; background: var(--vp-c-bg); color: var(--vp-c-text-1);
 }
-.field textarea { height: 70vh; font-family: var(--vp-font-family-mono); resize: none; }
-.actions { display: flex; gap: 10px; margin-bottom: 10px; }
-.btn { padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; }
+.editor-field textarea { height: 70vh; font-family: var(--vp-font-family-mono); resize: none; }
+
+.editor-actions, .editor-actions-spacer { height: 42px; margin-bottom: 10px; }
+.editor-actions { display: flex; gap: 10px; }
+
+.editor-btn { padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; transition: opacity 0.2s; }
+.editor-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .save-btn { background: var(--vp-c-brand-soft); color: var(--vp-c-brand-1); border: 1px solid var(--vp-c-brand-1); }
 .push-btn { background: var(--vp-c-brand-1); color: white; }
 .delete-btn { background: var(--vp-c-red-dimm); color: var(--vp-c-red-1); border: 1px solid var(--vp-c-red-1); }
-.status-bar { font-size: 0.9em; color: var(--vp-c-brand-1); font-weight: bold; }
+.editor-status { font-size: 0.9em; color: var(--vp-c-brand-1); font-weight: bold; margin-top: 10px; text-align: center; }
 .preview-content { 
-  flex-grow: 1; min-height: 70vh; max-height: 80vh; overflow-y: auto;
-  background: var(--vp-c-bg); padding: 15px; border-radius: 4px;
+  height: 70vh; overflow-y: auto;
+  background: var(--vp-c-bg); padding: 15px; 
+  border: 1px solid var(--vp-c-bg-alt);
+  border-radius: 4px;
 }
 /* Ensure code blocks look like VitePress docs */
 :deep(.vp-doc pre) { background-color: var(--vp-code-block-bg); padding: 16px; border-radius: 8px; }

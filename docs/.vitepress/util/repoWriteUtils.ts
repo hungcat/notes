@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { slugify } from "./slugify";
 
 const execAsync = promisify(exec);
 
@@ -79,14 +80,6 @@ type CreateNoteParams = {
     gitAdapter?: GitAdapter;
 };
 
-const formatSlug = (value: string) =>
-    value
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w-]+/g, "-")
-        .replace(/(^-|-$)/g, "")
-        .slice(0, 50) || "note";
-
 const buildNoteBody = (title: string, date: string, content: string, tags: string[] = []) => {
     const frontmatter = [
         "---",
@@ -132,7 +125,7 @@ export const createMarkdownNoteFile = async ({
 }: CreateNoteParams) => {
     const mergedConfig = { ...defaultConfig, ...config };
     const date = providedDate || new Date().toISOString().slice(0, 10);
-    const slug = formatSlug(title);
+    const slug = slugify(title);
     const baseName = fileName
         ? fileName
             .trim()
