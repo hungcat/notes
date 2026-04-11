@@ -5,6 +5,7 @@ export default defineConfig({
   title: "Notes",
   description: "個人用メモ",
   base: "/notes/",
+  cleanUrls: true,
   themeConfig: {
     nav: [{ text: "ホーム", link: "/" }],
     sidebar: [
