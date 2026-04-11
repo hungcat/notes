@@ -11,7 +11,7 @@ npm run docs:dev
 
 ## 公開 URL
 
-GitHub Pages 有効化後: `[HungCat Notes](https://hungcat.github.io/notes/)`
+GitHub Pages 有効化後: [HungCat Notes](https://hungcat.github.io/notes/)
 
 ## デプロイ
 
