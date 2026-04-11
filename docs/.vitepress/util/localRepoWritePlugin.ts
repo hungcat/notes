@@ -1,10 +1,6 @@
-import fs from "fs/promises";
 import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
 import type { IncomingMessage, ServerResponse } from "http";
-
-const execAsync = promisify(exec);
+import { createMarkdownNoteFile, stageCommitPushNoteFile } from "./repoWriteUtils";
 
 type MiddlewareNext = (err?: unknown) => void;
 
@@ -42,42 +38,14 @@ export const localRepoWritePlugin = () => {
                             return;
                         }
 
-                        const date = new Date().toISOString().slice(0, 10);
-                        const slug = title
-                            .toLowerCase()
-                            .replace(/[\W_]+/g, "-")
-                            .replace(/(^-|-$)/g, "")
-                            .slice(0, 50) || "note";
-                        const fileBase = fileName
-                            ? fileName.replace(/[^\w.-]+/g, "-")
-                            : `${date}-${slug}`;
+                        const relativePath = await createMarkdownNoteFile({
+                            title,
+                            content,
+                            fileName,
+                        });
 
-                        let targetPath = path.resolve(process.cwd(), "docs", "memo", `${fileBase}.md`);
-                        let counter = 1;
-                        while (true) {
-                            try {
-                                await fs.access(targetPath);
-                                targetPath = path.resolve(
-                                    process.cwd(),
-                                    "docs",
-                                    "memo",
-                                    `${fileBase}-${counter}.md`
-                                );
-                                counter += 1;
-                            } catch {
-                                break;
-                            }
-                        }
-
-                        const frontmatterTags = (content.match(/#\w+/g) || []).join(", ");
-                        const noteBody = `---\ntitle: ${title}\ndate: ${date}\n${frontmatterTags ? `tags: ${frontmatterTags}\n` : ""}---\n\n${content}\n`;
-
-                        await fs.writeFile(targetPath, noteBody, "utf-8");
-                        const relativePath = path.relative(process.cwd(), targetPath).replace(/\\/g, "/");
                         const commit = commitMessage || `Add note: ${title}`;
-                        await execAsync(`git add "${relativePath}"`);
-                        await execAsync(`git commit -m "${commit}"`);
-                        await execAsync(`git push`);
+                        await stageCommitPushNoteFile(relativePath, commit);
 
                         res.statusCode = 200;
                         res.end(JSON.stringify({ path: relativePath }));

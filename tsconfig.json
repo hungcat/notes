@@ -20,11 +20,6 @@
         ]
     },
     "include": [
-        "docs/**/*.ts",
-        "docs/**/*.vue",
-        "docs/**/*.md",
-        "docs/**/*.tsx",
-        "docs/**/*.mts",
-        "docs/.vitepress/**/*.ts"
+        "docs/.vitepress/**/*",
     ]
 }

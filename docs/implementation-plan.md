@@ -62,3 +62,30 @@
 - `pnpm docs:dev` 実行時にのみ動作するローカル API を追加
 - 保存先は `docs/memo/` 以下の Markdown ファイル
 - 保存時に `git add` / `git commit` / `git push` を実行する
+
+## 拡張性向上のための抽象化
+
+将来の外部ファイル化や GitHub Actions 移譲を考慮して、ファイル操作と Git 操作を抽象化しました。
+
+### 設定インターフェース
+```typescript
+export interface NoteRepositoryConfig {
+    baseDir: string;
+    memoDir: string;
+    dateFormat: string;
+    fileExtension: string;
+    gitRemote?: string;
+    gitBranch?: string;
+}
+```
+
+### アダプターインターフェース
+- `FileSystemAdapter`: ファイル操作を抽象化（テストや外部ストレージ対応）
+- `GitAdapter`: Git 操作を抽象化（GitHub API や外部サービス対応）
+
+### 移譲の容易さ
+- **GitHub Actions 移譲例**: GitHub API を使用したリモート操作
+- **外部ストレージ移譲例**: S3 や他のクラウドストレージへの保存
+- **設定外部化**: 環境変数や設定ファイルからの設定読み込み
+
+これにより、シナリオ B/C への移行が容易になります。
