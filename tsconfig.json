@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "lib": [
+            "DOM",
+            "ES2022",
+            "DOM.Iterable"
+        ],
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "docs/**/*.ts",
+        "docs/**/*.vue",
+        "docs/**/*.md",
+        "docs/**/*.tsx",
+        "docs/**/*.mts",
+        "docs/.vitepress/**/*.ts"
+    ]
+}

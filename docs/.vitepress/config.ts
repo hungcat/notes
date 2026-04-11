@@ -1,13 +1,20 @@
 import { defineConfig } from "vitepress";
+import type { DefaultTheme } from "vitepress";
+import { localRepoWritePlugin } from "./util/localRepoWritePlugin";
+import { isDevMode } from "./util/env";
 
-// GitHub Pages: https://<user>.github.io/<repo>/
+const navItems: DefaultTheme.NavItem[] = [
+  { text: "ホーム", link: "/" },
+  ...(isDevMode ? [{ text: "メモ入力", link: "/input" }] : []),
+];
+
 export default defineConfig({
   title: "Notes",
   description: "個人用メモ",
   base: "/notes/",
   cleanUrls: true,
   themeConfig: {
-    nav: [{ text: "ホーム", link: "/" }],
+    nav: navItems,
     sidebar: [
       {
         text: "メモ",
@@ -16,5 +23,8 @@ export default defineConfig({
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/hungcat/notes" }],
     search: { provider: "local" },
+  },
+  vite: {
+    plugins: [localRepoWritePlugin()],
   },
 });
