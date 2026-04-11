@@ -1,3 +1,10 @@
+---
+title: はじめに
+date: 2026-04-01
+tags:
+  - VitePress
+---
+
 # はじめに
 
 ここにメモを追加していきます。
@@ -7,12 +14,12 @@
 ## ローカルプレビュー
 
 ```bash
-npm install
-npm run docs:dev
+pnpm i
+pnpm docs:dev
 ```
 
 ## ビルド
 
 ```bash
-npm run docs:build
+pnpm docs:build
 ```
