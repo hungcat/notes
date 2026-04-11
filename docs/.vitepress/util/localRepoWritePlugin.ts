@@ -1,6 +1,7 @@
 import path from "path";
 import type { IncomingMessage, ServerResponse } from "http";
 import { createMarkdownNoteFile, stageCommitPushNoteFile } from "./repoWriteUtils";
+import type { MemoData } from "../types";
 
 type MiddlewareNext = (err?: unknown) => void;
 
@@ -12,14 +13,15 @@ type ViteServer = {
 
 /**
  * Vite plugin for handling local repository writes during development.
- * Creates a POST endpoint at /__api/save-note that saves markdown files to the repo.
+ * Creates a POST endpoint at /api/save-note that saves markdown files to the repo.
  */
 export const localRepoWritePlugin = () => {
     return {
         name: "vitepress-local-repo-write",
         configureServer(server: ViteServer) {
             server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: MiddlewareNext) => {
-                if ((req.url ?? "") !== "/__api/save-note" || req.method !== "POST") {
+                const url = req.url ?? "";
+                if (req.method !== "POST" || (url !== "/api/save-note" && url !== "/api/push-note")) {
                     return next();
                 }
 
@@ -31,24 +33,35 @@ export const localRepoWritePlugin = () => {
                     res.setHeader("Content-Type", "application/json");
                     try {
                         const data = JSON.parse(body);
-                        const { title, content, fileName, commitMessage } = data;
-                        if (!title || !content) {
-                            res.statusCode = 400;
-                            res.end(JSON.stringify({ error: "title and content are required" }));
-                            return;
+
+                        if (url === "/api/save-note") {
+                            const memo: MemoData = data;
+                            if (!memo.title || !memo.content) {
+                                res.statusCode = 400;
+                                res.end(JSON.stringify({ error: "title and content are required" }));
+                                return;
+                            }
+
+                            const relativePath = await createMarkdownNoteFile({
+                                title: memo.title,
+                                content: memo.content,
+                                tags: memo.tags,
+                                date: memo.date,
+                                fileName: memo.fileName,
+                            });
+                            res.statusCode = 200;
+                            res.end(JSON.stringify({ path: relativePath }));
+                        } else if (url === "/api/push-note") {
+                            const { path: relativePath, commitMessage } = data;
+                            if (!relativePath) {
+                                res.statusCode = 400;
+                                res.end(JSON.stringify({ error: "path is required for git push" }));
+                                return;
+                            }
+                            await stageCommitPushNoteFile(relativePath, commitMessage);
+                            res.statusCode = 200;
+                            res.end(JSON.stringify({ success: true }));
                         }
-
-                        const relativePath = await createMarkdownNoteFile({
-                            title,
-                            content,
-                            fileName,
-                        });
-
-                        const commit = commitMessage || `Add note: ${title}`;
-                        await stageCommitPushNoteFile(relativePath, commit);
-
-                        res.statusCode = 200;
-                        res.end(JSON.stringify({ path: relativePath }));
                     } catch (error: unknown) {
                         res.statusCode = 500;
                         res.end(JSON.stringify({ error: String(error) }));

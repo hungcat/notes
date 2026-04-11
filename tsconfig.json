@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES2022",
         "module": "ESNext",
-        "moduleResolution": "Bundler",
+        "moduleResolution": "bundler",
         "lib": [
             "DOM",
             "ES2022",
@@ -15,11 +15,14 @@
         "skipLibCheck": true,
         "resolveJsonModule": true,
         "isolatedModules": true,
-        "types": [
-            "node"
-        ]
     },
     "include": [
         "docs/.vitepress/**/*",
+        "docs/**/*.ts",
+        "docs/**/*.vue"
+    ],
+    "exclude": [
+        "docs/.vitepress/cache",
+        "docs/.vitepress/dist"
     ]
 }

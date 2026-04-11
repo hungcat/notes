@@ -71,6 +71,8 @@ const defaultConfig: NoteRepositoryConfig = {
 type CreateNoteParams = {
     title: string;
     content: string;
+    tags?: string[];
+    date?: string;
     fileName?: string;
     config?: Partial<NoteRepositoryConfig>;
     fsAdapter?: FileSystemAdapter;
@@ -85,11 +87,16 @@ const formatSlug = (value: string) =>
         .replace(/(^-|-$)/g, "")
         .slice(0, 50) || "note";
 
-const buildNoteBody = (title: string, date: string, content: string) => {
-    const tags = content.match(/#\w+/g) || [];
-    const tagsLine = tags.length > 0 ? `tags: ${tags.join(", ")}\n` : "";
+const buildNoteBody = (title: string, date: string, content: string, tags: string[] = []) => {
+    const frontmatter = [
+        "---",
+        `title: ${JSON.stringify(title)}`,
+        `date: ${date}`,
+        tags.length > 0 ? `tags: ${tags.join(", ")}` : null,
+        "---"
+    ].filter(Boolean).join("\n");
 
-    return `---\ntitle: ${title}\ndate: ${date}\n${tagsLine}---\n\n${content}\n`;
+    return `${frontmatter}\n\n${content}\n`;
 };
 
 const getMemoDirectory = (config: NoteRepositoryConfig) => path.resolve(config.baseDir, config.memoDir);
@@ -117,12 +124,14 @@ const createUniqueNotePath = async (baseFileName: string, config: NoteRepository
 export const createMarkdownNoteFile = async ({
     title,
     content,
+    tags = [],
+    date: providedDate,
     fileName,
     config = defaultConfig,
     fsAdapter = new DefaultFileSystemAdapter()
 }: CreateNoteParams) => {
     const mergedConfig = { ...defaultConfig, ...config };
-    const date = new Date().toISOString().slice(0, 10);
+    const date = providedDate || new Date().toISOString().slice(0, 10);
     const slug = formatSlug(title);
     const baseName = fileName
         ? fileName
@@ -131,7 +140,7 @@ export const createMarkdownNoteFile = async ({
             .replace(/(^-|-$)/g, "") || `${date}-${slug}`
         : `${date}-${slug}`;
 
-    const noteBody = buildNoteBody(title, date, content);
+    const noteBody = buildNoteBody(title, date, content, tags);
     const targetPath = await createUniqueNotePath(baseName, mergedConfig, fsAdapter);
     await fsAdapter.writeFile(targetPath, noteBody, "utf-8");
 
