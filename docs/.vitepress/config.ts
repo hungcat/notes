@@ -16,7 +16,7 @@ export default defineConfig({
       {
         text: "メニュー",
         items: [
-          { text: "はじめに", link: "/memo/getting-started" },
+          { text: "はじめに", link: "/getting-started" },
         ],
       },
     ],

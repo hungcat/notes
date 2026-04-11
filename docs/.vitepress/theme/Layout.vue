@@ -4,17 +4,17 @@
       <div class="memo-sidebar-toggle-panel">
         <button 
           type="button" 
-          :class="{ active: currentMode === 'tag' }"
-          @click="setMode('tag')"
-        >
-          タグで表示
-        </button>
-        <button 
-          type="button" 
           :class="{ active: currentMode === 'date' }"
           @click="setMode('date')"
         >
           日付で表示
+        </button>
+        <button 
+          type="button" 
+          :class="{ active: currentMode === 'tag' }"
+          @click="setMode('tag')"
+        >
+          タグで表示
         </button>
       </div>
 

@@ -35,13 +35,6 @@ export default createContentLoader("memo/*.md", {
         const tagGroups = new Map<string, DefaultTheme.SidebarItem[]>();
 
         const sorted = raw
-            .filter((page) => {
-                const path = page.url.replace(/\/$/, "");
-                return !path.endsWith("/index") &&
-                    !path.endsWith("/index.html") &&
-                    !path.endsWith("/getting-started") &&
-                    !path.endsWith("/getting-started.html");
-            })
             .sort((a, b) => {
                 const dateA = a.frontmatter.date ? new Date(a.frontmatter.date).getTime() : 0;
                 const dateB = b.frontmatter.date ? new Date(b.frontmatter.date).getTime() : 0;
@@ -76,6 +69,13 @@ export default createContentLoader("memo/*.md", {
         return {
             groups: [
                 {
+                    mode: "date",
+                    label: "日付表示",
+                    items: Array.from(dateGroups.entries())
+                        .sort(([a], [b]) => b.localeCompare(a))
+                        .map(([month, items]) => ({ text: month, items })),
+                },
+                {
                     mode: "tag",
                     label: "タグ表示",
                     items: Array.from(tagGroups.entries())
@@ -84,13 +84,6 @@ export default createContentLoader("memo/*.md", {
                             text: tag === "その他" ? "その他" : `タグ: ${tag}`,
                             items,
                         })),
-                },
-                {
-                    mode: "date",
-                    label: "日付表示",
-                    items: Array.from(dateGroups.entries())
-                        .sort(([a], [b]) => b.localeCompare(a))
-                        .map(([month, items]) => ({ text: month, items })),
                 },
             ],
         };

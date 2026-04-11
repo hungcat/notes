@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: メモへ
-      link: /memo/getting-started
+      link: /getting-started
 ---
 
 ## 概要
