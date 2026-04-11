@@ -25,6 +25,7 @@ export interface FileSystemAdapter {
 
 // Git operations abstraction for externalization (e.g., GitHub API)
 export interface GitAdapter {
+    reset(): Promise<void>;
     add(files: string[]): Promise<void>;
     commit(message: string): Promise<void>;
     push(remote?: string, branch?: string): Promise<void>;
@@ -44,6 +45,9 @@ class DefaultFileSystemAdapter implements FileSystemAdapter {
 }
 
 class DefaultGitAdapter implements GitAdapter {
+    async reset(): Promise<void> {
+        await execAsync(`git reset`);
+    }
     async add(files: string[]): Promise<void> {
         for (const file of files) {
             await execAsync(`git add "${file}"`);
@@ -149,6 +153,7 @@ export const stageCommitPushNoteFile = async (
     const mergedConfig = { ...defaultConfig, ...config };
     const normalizedCommitMessage = commitMessage ?? `Add note: ${relativePath}`;
 
+    await gitAdapter.reset();
     await gitAdapter.add([relativePath]);
     await gitAdapter.commit(normalizedCommitMessage);
     await gitAdapter.push(mergedConfig.gitRemote, mergedConfig.gitBranch);
