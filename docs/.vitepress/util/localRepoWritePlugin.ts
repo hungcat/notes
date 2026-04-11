@@ -13,7 +13,9 @@ type ViteServer = {
 
 /**
  * Vite plugin for handling local repository writes during development.
- * Creates a POST endpoint at /api/save-note that saves markdown files to the repo.
+ * 開発サーバー起動時に、ファイルの保存とGit操作を行うエンドポイントを提供します。
+ * 
+ * @returns {object} Viteプラグインオブジェクト
  */
 export const localRepoWritePlugin = () => {
     return {
@@ -25,6 +27,7 @@ export const localRepoWritePlugin = () => {
                     return next();
                 }
 
+                // POSTボディの読み込み
                 let body = "";
                 req.on("data", (chunk: Buffer | string) => {
                     body += chunk;
@@ -34,6 +37,7 @@ export const localRepoWritePlugin = () => {
                     try {
                         const data = JSON.parse(body);
 
+                        // ファイル保存API
                         if (url === "/api/save-note") {
                             const memo: MemoData = data;
                             if (!memo.title || !memo.content) {
@@ -51,6 +55,7 @@ export const localRepoWritePlugin = () => {
                             });
                             res.statusCode = 200;
                             res.end(JSON.stringify({ path: relativePath }));
+                            // Git操作API
                         } else if (url === "/api/push-note") {
                             const { path: relativePath, commitMessage } = data;
                             if (!relativePath) {

@@ -6,7 +6,9 @@ import { slugify } from "./slugify";
 
 const execAsync = promisify(exec);
 
-// Configuration interface for externalization
+/**
+ * ノートリポジトリの動作を定義する設定インターフェース
+ */
 export interface NoteRepositoryConfig {
     baseDir: string;
     memoDir: string;
@@ -16,14 +18,18 @@ export interface NoteRepositoryConfig {
     gitBranch?: string;
 }
 
-// File system abstraction for easier testing and externalization
+/**
+ * ファイル操作を抽象化するインターフェース（テストや外部ストレージ対応を容易にするため）
+ */
 export interface FileSystemAdapter {
     mkdir(dirPath: string, options?: { recursive?: boolean }): Promise<void>;
     access(filePath: string): Promise<void>;
     writeFile(filePath: string, content: string, encoding?: BufferEncoding): Promise<void>;
 }
 
-// Git operations abstraction for externalization (e.g., GitHub API)
+/**
+ * Git操作を抽象化するインターフェース
+ */
 export interface GitAdapter {
     reset(): Promise<void>;
     add(files: string[]): Promise<void>;
@@ -31,7 +37,9 @@ export interface GitAdapter {
     push(remote?: string, branch?: string): Promise<void>;
 }
 
-// Default implementations
+/**
+ * Node.js の標準 fs モジュールを使用したデフォルトのファイルシステム実装
+ */
 class DefaultFileSystemAdapter implements FileSystemAdapter {
     async mkdir(dirPath: string, options?: { recursive?: boolean }): Promise<void> {
         await fs.mkdir(dirPath, options);
@@ -44,6 +52,9 @@ class DefaultFileSystemAdapter implements FileSystemAdapter {
     }
 }
 
+/**
+ * ローカルの git コマンドを使用したデフォルトの Git 操作実装
+ */
 class DefaultGitAdapter implements GitAdapter {
     async reset(): Promise<void> {
         await execAsync(`git reset`);
@@ -63,7 +74,9 @@ class DefaultGitAdapter implements GitAdapter {
     }
 }
 
-// Default configuration
+/**
+ * プロジェクトのデフォルト設定
+ */
 const defaultConfig: NoteRepositoryConfig = {
     baseDir: process.cwd(),
     memoDir: "docs/memo",
@@ -84,6 +97,15 @@ type CreateNoteParams = {
     gitAdapter?: GitAdapter;
 };
 
+/**
+ * Markdownファイルの本文（フロントマター付き）を構築する
+ * 
+ * @param {string} title - ノートのタイトル
+ * @param {string} date - 作成日付 (YYYY-MM-DD形式)
+ * @param {string} content - Markdownの本文
+ * @param {string[]} [tags=[]] - ノートに付与するタグの配列
+ * @returns {string} フロントマターを含むMarkdown文字列
+ */
 const buildNoteBody = (title: string, date: string, content: string, tags: string[] = []) => {
     const frontmatter = [
         "---",
@@ -96,8 +118,22 @@ const buildNoteBody = (title: string, date: string, content: string, tags: strin
     return `${frontmatter}\n\n${content}\n`;
 };
 
-const getMemoDirectory = (config: NoteRepositoryConfig) => path.resolve(config.baseDir, config.memoDir);
+/**
+ * メモを保存するディレクトリの絶対パスを取得する
+ * 
+ * @param {NoteRepositoryConfig} config - リポジトリ設定
+ * @returns {string} メモディレクトリの絶対パス
+ */
+const getMemoDirectory = (config: NoteRepositoryConfig): string => path.resolve(config.baseDir, config.memoDir);
 
+/**
+ * 同名ファイルが存在する場合に連番を付与して、ユニークなファイルパスを生成する
+ * 
+ * @param {string} baseFileName - 拡張子なしのベースファイル名
+ * @param {NoteRepositoryConfig} config - リポジトリ設定
+ * @param {FileSystemAdapter} fsAdapter - ファイルシステムアダプタの実装
+ * @returns {Promise<string>} 生成された一意なファイルパス
+ */
 const createUniqueNotePath = async (baseFileName: string, config: NoteRepositoryConfig, fsAdapter: FileSystemAdapter) => {
     const memoDir = getMemoDirectory(config);
     await fsAdapter.mkdir(memoDir, { recursive: true });
@@ -118,6 +154,12 @@ const createUniqueNotePath = async (baseFileName: string, config: NoteRepository
     return targetPath;
 };
 
+/**
+ * 新しいMarkdownノートファイルを生成して保存する
+ * 
+ * @param {CreateNoteParams} params - 作成するノートのパラメータ
+ * @returns {Promise<string>} 生成されたファイルのリポジトリルートからの相対パス
+ */
 export const createMarkdownNoteFile = async ({
     title,
     content,
@@ -144,6 +186,15 @@ export const createMarkdownNoteFile = async ({
     return path.relative(mergedConfig.baseDir, targetPath).replace(/\\/g, "/");
 };
 
+/**
+ * 指定されたファイルをステージング、コミットし、リモートへプッシュする
+ * 
+ * @param {string} relativePath - 処理対象ファイルの相対パス
+ * @param {string} [commitMessage] - コミットメッセージ
+ * @param {Partial<NoteRepositoryConfig>} [config=defaultConfig] - リポジトリ設定
+ * @param {GitAdapter} [gitAdapter=new DefaultGitAdapter()] - Git操作アダプタの実装
+ * @returns {Promise<void>}
+ */
 export const stageCommitPushNoteFile = async (
     relativePath: string,
     commitMessage?: string,

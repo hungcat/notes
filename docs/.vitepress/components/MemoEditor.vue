@@ -6,7 +6,7 @@ import 'highlight.js/styles/github-dark.css'
 import { slugify } from '../util/slugify'
 import type { MemoData } from '../types'
 
-// markdown-it の初期化
+// markdown-it の初期化 (レンダリングオプションとシンタックスハイライトの設定)
 const md: MarkdownIt = new MarkdownIt({
   html: true,
   linkify: true,
@@ -31,7 +31,11 @@ const statusMessage = ref('')
 const lastSavedPath = ref('')
 const saving = ref(false)
 
-// 未保存の変更がある場合の離脱防止
+ /**
+ * ページ離脱時のイベントハンドラ
+ * 未保存の変更（isDirty）がある場合に確認ダイアログを表示させる
+ * @param {BeforeUnloadEvent} e - ブラウザのBeforeUnloadイベント
+ */
 const handleBeforeUnload = (e: BeforeUnloadEvent) => {
   if (isDirty.value) {
     e.preventDefault()
@@ -40,7 +44,7 @@ const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 }
 
 onMounted(() => {
-  // キャッシュから復元
+  // localStorageから執筆中の内容を復元（VitePressのリロード対策）
   const saved = localStorage.getItem('memo_draft_cache')
   if (saved) {
     const { t, tg, c, p } = JSON.parse(saved)
@@ -57,8 +61,17 @@ onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
+ /**
+ * 現在の入力内容をHTMLに変換した文字列を取得する
+ * @returns {string} レンダリングされたHTML
+ */
 const renderedContent = computed(() => md.render(content.value))
 
+ /**
+ * 執筆内容のドラフトをlocalStorageに保存する
+ * VitePressの自動リロードによるデータ消失を防ぐために使用
+ * @returns {void}
+ */
 const saveDraftToLocalStorage = () => {
   localStorage.setItem('memo_draft_cache', JSON.stringify({
     t: title.value,
@@ -68,6 +81,10 @@ const saveDraftToLocalStorage = () => {
   }))
 }
 
+ /**
+ * 入力内容を監視し、変更があれば自動的にドラフトをキャッシュし、Dirtyフラグを立てる
+ * @returns {void}
+ */
 watch([title, tags, content, lastSavedPath], () => {
   saveDraftToLocalStorage()
   if (title.value || tags.value || content.value) {
@@ -75,6 +92,11 @@ watch([title, tags, content, lastSavedPath], () => {
   }
 })
 
+/**
+ * メモをサーバー経由でファイルシステムに保存
+ * 成功時にサーバーから返された相対パスを保持する
+ * @returns {Promise<void>} 処理完了時に解決されるPromise
+ */
 const saveMemo = async () => {
   if (!title.value || !content.value) {
     alert('タイトルと内容を入力してください')
@@ -88,6 +110,7 @@ const saveMemo = async () => {
     const dateStr = new Date().toISOString().split('T')[0]
     const fileName = `${dateStr}-${slugify(title.value)}`
 
+    // APIエンドポイントへの送信データ構築
     const payload: MemoData = {
       title: title.value,
       tags: tags.value.split(/[,、]/).map(t => t.trim()).filter(Boolean),
@@ -115,6 +138,11 @@ const saveMemo = async () => {
   }
 }
 
+/**
+ * 保存されたファイルをGitに反映
+ * 下書き保存が完了している（lastSavedPathがある）必要がある
+ * @returns {Promise<void>} 処理完了時に解決されるPromise
+ */
 const pushToGit = async () => {
   if (!lastSavedPath.value) return
   saving.value = true
@@ -140,6 +168,12 @@ const pushToGit = async () => {
   }
 }
 
+/**
+ * 入力内容とキャッシュを破棄してエディタをリセット
+ * 変更がある場合はユーザーに確認を求める
+ * @param {boolean} [force=false] - 確認なしで強制的にリセットするかどうか
+ * @returns {void}
+ */
 const deleteMemo = (force = false) => {
   if (!force && isDirty.value && !confirm('入力内容を破棄しますか？')) return
   title.value = ''; tags.value = ''; content.value = ''; isDirty.value = false;

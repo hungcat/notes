@@ -13,6 +13,11 @@ export type MemoSidebarData = {
     groups: MemoSidebarGroup[];
 };
 
+/**
+ * 任意の型で渡されるタグ情報を正規化して文字列の配列に変換する
+ * @param {any} tags - パース対象のタグデータ
+ * @returns {string[]} トリムされたタグ文字列の配列
+ */
 const normalizeTag = (tags: any): string[] => {
     if (Array.isArray(tags)) return tags;
     if (typeof tags === "string") {

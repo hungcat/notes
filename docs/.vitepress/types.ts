@@ -1,3 +1,6 @@
+/**
+ * サーバーとクライアント間でやり取りされるメモデータのインターフェース
+ */
 export interface MemoData {
     title: string
     tags: string[]
