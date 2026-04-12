@@ -3,8 +3,8 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github-dark.css'
-import { slugify } from '../util/slugify'
-import type { MemoData } from '../types'
+import { slugify } from '../../util/slugify'
+import type { MemoData } from '../../definitions/types'
 
 // markdown-it の初期化 (レンダリングオプションとシンタックスハイライトの設定)
 const md: MarkdownIt = new MarkdownIt({

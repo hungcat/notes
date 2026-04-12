@@ -1,7 +1,7 @@
 import path from "path";
 import type { IncomingMessage, ServerResponse } from "http";
 import { createMarkdownNoteFile, stageCommitPushNoteFile } from "./repoWriteUtils";
-import type { MemoData } from "../types";
+import type { MemoData } from "../definitions/types";
 
 type MiddlewareNext = (err?: unknown) => void;
 

@@ -1,17 +1,5 @@
 import { createContentLoader } from "vitepress";
-import type { DefaultTheme } from "vitepress";
-
-export type MemoSidebarMode = "tag" | "date";
-
-export type MemoSidebarGroup = {
-    mode: MemoSidebarMode;
-    label: string;
-    items: DefaultTheme.SidebarItem[];
-};
-
-export type MemoSidebarData = {
-    groups: MemoSidebarGroup[];
-};
+import type { MemoSidebarData, MemoSidebarItem } from "./definitions/types";
 
 /**
  * 任意の型で渡されるタグ情報を正規化して文字列の配列に変換する
@@ -31,8 +19,8 @@ export { data };
 
 export default createContentLoader("memo/*.md", {
     transform(raw): MemoSidebarData {
-        const dateGroups = new Map<string, DefaultTheme.SidebarItem[]>();
-        const tagGroups = new Map<string, DefaultTheme.SidebarItem[]>();
+        const dateGroups = new Map<string, MemoSidebarItem[]>();
+        const tagGroups = new Map<string, MemoSidebarItem[]>();
 
         const sorted = raw
             .sort((a, b) => {
@@ -47,7 +35,7 @@ export default createContentLoader("memo/*.md", {
             const { url, frontmatter } = page;
             const title = frontmatter.title || url.split('/').filter(Boolean).pop()?.replace('.html', '') || url;
             const link = url.replace(/\.html$/, "");
-            const item: DefaultTheme.SidebarItem = { text: title, link };
+            const item: MemoSidebarItem = { text: title, link };
 
             // 日付グループ (YYYY-MM)
             const dateKey = frontmatter.date

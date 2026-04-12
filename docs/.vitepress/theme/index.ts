@@ -1,7 +1,7 @@
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
-import './custom.css'
-import MemoEditor from '../components/MemoEditor.vue'
+import Layout from './components/Layout.vue'
+import MemoEditor from './components/MemoEditor.vue'
 
 /**
  * VitePress テーマの設定
@@ -9,6 +9,7 @@ import MemoEditor from '../components/MemoEditor.vue'
  */
 export default {
     extends: DefaultTheme,
+    Layout,
     enhanceApp({ app }) {
         // MemoEditor をグローバルに登録
         app.component('MemoEditor', MemoEditor)

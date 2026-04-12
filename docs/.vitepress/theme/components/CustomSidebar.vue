@@ -1,56 +1,54 @@
 <template>
-  <Layout>
-    <template #sidebar-nav-after>
-      <div class="memo-sidebar-toggle-panel">
-        <button 
-          type="button" 
-          :class="{ active: currentMode === 'date' }"
-          @click="setMode('date')"
-        >
-          日付で表示
-        </button>
-        <button 
-          type="button" 
-          :class="{ active: currentMode === 'tag' }"
-          @click="setMode('tag')"
-        >
-          タグで表示
-        </button>
-      </div>
+  <!-- 動的グループ（日付/タグ）の切り替えパネル -->
+  <div class="memo-sidebar-toggle-panel">
+    <button 
+      type="button" 
+      :class="{ active: currentMode === 'date' }"
+      @click="setMode('date')"
+    >
+      日付で表示
+    </button>
+    <button 
+      type="button" 
+      :class="{ active: currentMode === 'tag' }"
+      @click="setMode('tag')"
+    >
+      タグで表示
+    </button>
+  </div>
 
-      <div class="memo-sidebar-content">
-        <div 
-          v-for="group in sidebarData.groups.filter((g: MemoSidebarGroup) => g.mode === currentMode)" 
-          :key="group.label"
-          class="memo-sidebar-group"
+  <div class="memo-sidebar-content">
+    <div 
+      v-for="group in sidebarData.groups.filter((g: MemoSidebarGroup) => g.mode === currentMode)" 
+      :key="group.label"
+      class="memo-sidebar-group"
+    >
+      <div v-for="section in group.items" :key="section.text" class="memo-sidebar-section">
+        <h3 
+          class="memo-sidebar-section-title" 
+          :class="{ expanded: expandedSections[`${currentMode}-${section.text}`] }"
+          @click="toggleSection(`${currentMode}-${section.text}`)"
         >
-          <div v-for="section in group.items" :key="section.text" class="memo-sidebar-section">
-            <h3 
-              class="memo-sidebar-section-title" 
-              :class="{ expanded: expandedSections[`${currentMode}-${section.text}`] }"
-              @click="toggleSection(`${currentMode}-${section.text}`)"
-            >
-              {{ section.text }}
-            </h3>
-            <ul v-show="expandedSections[`${currentMode}-${section.text}`]" class="memo-sidebar-items">
-              <li v-for="item in section.items" :key="item.link" class="memo-sidebar-item">
-                <a :href="item.link ? withBase(item.link) : '#'" class="memo-sidebar-link">{{ item.text }}</a>
-              </li>
-            </ul>
-          </div>
-        </div>
+          {{ section.text }}
+        </h3>
+        <ul v-show="expandedSections[`${currentMode}-${section.text}`]" class="memo-sidebar-items">
+          <li v-for="item in section.items" :key="item.link" class="memo-sidebar-item">
+            <a :href="item.link ? withBase(item.link) : '#'" class="memo-sidebar-link">{{ item.text }}</a>
+          </li>
+        </ul>
       </div>
-    </template>
-  </Layout>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import DefaultTheme from 'vitepress/theme'
 import { ref, onMounted } from 'vue'
-import { withBase } from 'vitepress'
-import { MemoSidebarGroup, data as sidebarData } from '../sidebar.data'
+import { useData, withBase } from 'vitepress'
+import { data as sidebarData } from '../../sidebar.data'
+import type { MemoSidebarGroup } from '../../definitions/types'
 
-const { Layout } = DefaultTheme
+// // themeConfig (config.ts) の値を取得
+// const { theme } = useData<CustomThemeConfig>()
 
 const storageKey = 'memoSidebarGroupMode'
 const currentMode = ref<'tag' | 'date'>('tag')
@@ -117,6 +115,9 @@ const setMode = (mode: 'tag' | 'date') => {
   transition: transform 0.2s;
   display: inline-block;
 }
+.memo-sidebar-section-title.static-title::before {
+  display: none;
+}
 .memo-sidebar-section-title.expanded::before {
   transform: rotate(90deg);
 }
@@ -137,9 +138,5 @@ const setMode = (mode: 'tag' | 'date') => {
 }
 .memo-sidebar-link:hover {
   color: var(--vp-c-brand);
-}
-/* トップレベルのセクション間のスペースを減らす */
-:deep(.VPSidebarItem.level-0) {
-  padding-bottom: 0 !important;
 }
 </style>

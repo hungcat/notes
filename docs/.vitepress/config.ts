@@ -1,8 +1,9 @@
-import { defineConfig } from "vitepress";
+import { defineConfigWithTheme } from "vitepress";
 import { localRepoWritePlugin } from "./util/localRepoWritePlugin";
 import { isDevMode } from "./util/env";
+import type { CustomThemeConfig } from "./definitions/types";
 
-export default defineConfig({
+export default defineConfigWithTheme<CustomThemeConfig>({
   title: "Notes",
   description: "個人用メモ",
   base: "/notes/",
@@ -15,9 +16,7 @@ export default defineConfig({
     sidebar: [
       {
         text: "メニュー",
-        items: [
-          { text: "はじめに", link: "/getting-started" },
-        ],
+        items: [{ text: "はじめに", link: "/getting-started" }],
       },
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/hungcat/notes" }],
