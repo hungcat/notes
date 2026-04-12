@@ -1,8 +1,8 @@
 import { defineConfigWithTheme } from "vitepress";
 import { localRepoWritePlugin } from "./util/localRepoWritePlugin";
 import { isDevMode } from "./util/env";
-import type { CustomThemeConfig } from "./definitions/types";
-import { getMemoSidebar } from "./sidebar.data";
+import type { CustomThemeConfig, MemoSidebarItem } from "./definitions/types";
+import { getMemoSidebar } from "./util/getMemoSidebar";
 
 export default defineConfigWithTheme<CustomThemeConfig>({
   title: "Notes",

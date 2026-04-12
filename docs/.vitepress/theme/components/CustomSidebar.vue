@@ -35,7 +35,8 @@
           <li v-for="item in section.items" :key="item.link" class="VPSidebarItem level-1">
             <div class="item">
               <div class="indicator"></div>
-              <a class="link" :class="{ active: isPageActive(item.link) }" :href="item.link ? withBase(item.link) : '#'" @click="expandedSections[`${currentMode}-${section.text}`] = true">
+              <a class="link" :class="{ active: isPageActive(item.link) }" :href="item.link ? withBase(item.link) : '#'" 
+                 @click="expandedSections[`${currentMode}-${section.text}`] = true">
                 <p class="text">{{ item.text }}</p>
               </a>
             </div>
@@ -59,12 +60,14 @@ const { theme, page } = useData<CustomThemeConfig>()
  */
 const isPageActive = (link: string | undefined) => {
   if (!link) return false
-  // base path やスラッシュの有無に左右されないように正規化して比較
-  const normalize = (path: string) => path.replace(/^\//, '').replace(/\.(md|html)$/, '').replace(/\/$/, '')
-  const currentPath = normalize(page.value.relativePath)
-  const targetPath = normalize(link)
-  // リンクの末尾が一致するか、またはパス全体が一致するかを確認
-  return targetPath.endsWith(currentPath) || currentPath.endsWith(targetPath)
+  
+  const normalize = (path: string) => 
+    path.split('?')[0].split('#')[0] // クエリ/ハッシュ除去
+        .replace(/^\//, '')          // 先頭スラッシュ除去
+        .replace(/\.(md|html)$/, '') // 拡張子除去
+        .replace(/\/$/, '');         // 末尾スラッシュ除去
+
+  return normalize(page.value.relativePath) === normalize(link);
 }
 
 const storageKey = 'memoSidebarGroupMode'
