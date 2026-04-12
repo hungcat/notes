@@ -2,6 +2,7 @@ import { defineConfigWithTheme } from "vitepress";
 import { localRepoWritePlugin } from "./util/localRepoWritePlugin";
 import { isDevMode } from "./util/env";
 import type { CustomThemeConfig } from "./definitions/types";
+import { getMemoSidebar } from "./sidebar.data";
 
 export default defineConfigWithTheme<CustomThemeConfig>({
   title: "Notes",
@@ -14,10 +15,8 @@ export default defineConfigWithTheme<CustomThemeConfig>({
       ...(isDevMode ? [{ text: "メモ入力", link: "/input" }] : []),
     ],
     sidebar: [
-      {
-        text: "メニュー",
-        items: [{ text: "はじめに", link: "/getting-started" }],
-      },
+      { text: "はじめに", link: "/getting-started" },
+      ...getMemoSidebar()
     ],
     socialLinks: [{ icon: "github", link: "https://github.com/hungcat/notes" }],
     search: { provider: "local" },

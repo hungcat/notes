@@ -19,7 +19,7 @@
 
   <div class="memo-sidebar-content">
     <div 
-      v-for="group in sidebarData.groups.filter((g: MemoSidebarGroup) => g.mode === currentMode)" 
+      v-for="group in sidebarGroups.filter(g => g.mode === currentMode)" 
       :key="group.label"
       class="memo-sidebar-group"
     >
@@ -42,16 +42,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useData, withBase } from 'vitepress'
-import { data as sidebarData } from '../../sidebar.data'
-import type { MemoSidebarGroup } from '../../definitions/types'
+import type { MemoSidebarGroup, CustomThemeConfig, MemoSidebarItem } from '../../definitions/types'
 
-// // themeConfig (config.ts) の値を取得
-// const { theme } = useData<CustomThemeConfig>()
+// themeConfig (config.ts) の値を取得
+const { theme } = useData<CustomThemeConfig>()
 
 const storageKey = 'memoSidebarGroupMode'
 const currentMode = ref<'tag' | 'date'>('tag')
+
+/**
+ * themeConfig.sidebar からデータを取得し、動的にグループ化を行う
+ */
+const sidebarGroups = computed<MemoSidebarGroup[]>(() => {
+  const items = (theme.value.sidebar as unknown as MemoSidebarItem[]) || []
+  
+  const dateMap = new Map<string, MemoSidebarItem[]>()
+  const tagMap = new Map<string, MemoSidebarItem[]>()
+
+  items.forEach(item => {
+    // 「はじめに」などメタデータがないものはスキップ、または個別に扱う
+    if (!item.link?.startsWith('/memo/')) return
+
+    // 日付グループ
+    const month = item.date ? item.date.substring(0, 7) : 'その他'
+    if (!dateMap.has(month)) dateMap.set(month, [])
+    dateMap.get(month)!.push(item)
+
+    // タググループ
+    const tags = item.tags && item.tags.length > 0 ? item.tags : ['その他']
+    tags.forEach(tag => {
+      if (!tagMap.has(tag)) tagMap.set(tag, [])
+      tagMap.get(tag)!.push(item)
+    })
+  })
+
+  return [
+    {
+      mode: 'date',
+      label: '日付表示',
+      items: Array.from(dateMap.entries())
+        .sort(([a], [b]) => {
+          if (a === 'その他') return 1;
+          if (b === 'その他') return -1;
+          return b.localeCompare(a); // 月を新しい順に
+        })
+        .map(([text, items]) => ({ 
+          text, 
+          items: items.sort((a, b) => (b.date || '0000-00-00').localeCompare(a.date || '0000-00-00')) // 月内を新しい順に
+        }))
+    },
+    {
+      mode: 'tag',
+      label: 'タグ表示',
+      items: Array.from(tagMap.entries())
+        .sort(([a], [b]) => a === 'その他' ? 1 : b === 'その他' ? -1 : a.localeCompare(b))
+        .map(([tag, items]) => ({
+          text: tag === 'その他' ? `その他 (${items.length})` : `${tag} (${items.length})`,
+          items: items.sort((a, b) => (b.date || '0000-00-00').localeCompare(a.date || '0000-00-00')) // タグ内を新しい順に
+        }))
+    }
+  ]
+})
 
 onMounted(() => {
   const saved = localStorage.getItem(storageKey)

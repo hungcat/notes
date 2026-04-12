@@ -28,6 +28,11 @@ const { Layout } = DefaultTheme
 </script>
 
 <style scoped>
+/* 「はじめに」（最初の項目）以外のデフォルトサイドバー項目を非表示にする */
+:deep(.VPSidebarItem.level-1:not(:first-child)) {
+  display: none !important;
+}
+
 /* トップレベルのセクション間のスペースを減らす */
 :deep(.VPSidebarItem.level-0) {
   padding-bottom: 0 !important;

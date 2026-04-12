@@ -15,7 +15,10 @@ export interface MemoData {
 export type MemoSidebarMode = "tag" | "date";
 
 /** サイドバーの各項目（記事やグループ）の型 */
-export type MemoSidebarItem = DefaultTheme.SidebarItem;
+export type MemoSidebarItem = DefaultTheme.SidebarItem & {
+    date?: string;
+    tags?: string[];
+};
 
 /** サイドバーのグループ定義 */
 export interface MemoSidebarGroup {
