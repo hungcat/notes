@@ -26,6 +26,19 @@ export default defineConfigWithTheme<CustomThemeConfig>({
     build: {
       // 警告のしきい値を 500kB から 1000kB (1MB) に引き上げ
       chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              // 巨大なライブラリを個別に分割
+              // markdown-itは分割するとビルド時エラーが発生するため、分割しない
+              if (id.includes('highlight.js')) return 'vendor-highlight';
+              if (id.includes('minisearch')) return 'vendor-search';
+              if (id.includes('marked')) return 'vendor-marked';
+            }
+          }
+        }
+      }
     }
   },
 });
