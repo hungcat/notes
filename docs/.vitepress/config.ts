@@ -25,5 +25,25 @@ export default defineConfig({
   },
   vite: {
     plugins: [localRepoWritePlugin()],
+    build: {
+      // 警告のしきい値を 500kB から 1000kB (1MB) に引き上げ
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          // 巨大な依存ライブラリを個別のチャンクに分割
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('highlight.js')) {
+                return 'vendor-highlight';
+              }
+              if (id.includes('markdown-it')) {
+                return 'vendor-markdown';
+              }
+              return 'vendor';
+            }
+          }
+        }
+      }
+    }
   },
 });
