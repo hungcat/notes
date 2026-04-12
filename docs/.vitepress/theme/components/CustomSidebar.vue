@@ -32,8 +32,13 @@
           {{ section.text }}
         </h3>
         <ul v-show="expandedSections[`${currentMode}-${section.text}`]" class="memo-sidebar-items">
-          <li v-for="item in section.items" :key="item.link" class="memo-sidebar-item">
-            <a :href="item.link ? withBase(item.link) : '#'" class="memo-sidebar-link">{{ item.text }}</a>
+          <li v-for="item in section.items" :key="item.link" class="VPSidebarItem level-1">
+            <div class="item">
+              <div class="indicator"></div>
+              <a class="link" :class="{ active: isPageActive(item.link) }" :href="item.link ? withBase(item.link) : '#'" @click="expandedSections[`${currentMode}-${section.text}`] = true">
+                <p class="text">{{ item.text }}</p>
+              </a>
+            </div>
           </li>
         </ul>
       </div>
@@ -47,7 +52,20 @@ import { useData, withBase } from 'vitepress'
 import type { MemoSidebarGroup, CustomThemeConfig, MemoSidebarItem } from '../../definitions/types'
 
 // themeConfig (config.ts) の値を取得
-const { theme } = useData<CustomThemeConfig>()
+const { theme, page } = useData<CustomThemeConfig>()
+
+/**
+ * 現在のページがアクティブ（選択中）かどうかを判定する
+ */
+const isPageActive = (link: string | undefined) => {
+  if (!link) return false
+  // base path やスラッシュの有無に左右されないように正規化して比較
+  const normalize = (path: string) => path.replace(/^\//, '').replace(/\.(md|html)$/, '').replace(/\/$/, '')
+  const currentPath = normalize(page.value.relativePath)
+  const targetPath = normalize(link)
+  // リンクの末尾が一致するか、またはパス全体が一致するかを確認
+  return targetPath.endsWith(currentPath) || currentPath.endsWith(targetPath)
+}
 
 const storageKey = 'memoSidebarGroupMode'
 const currentMode = ref<'tag' | 'date'>('tag')
@@ -63,7 +81,7 @@ const sidebarGroups = computed<MemoSidebarGroup[]>(() => {
 
   items.forEach(item => {
     // 「はじめに」などメタデータがないものはスキップ、または個別に扱う
-    if (!item.link?.startsWith('/memo/')) return
+    if (!item.link || !item.link.includes('/memo/')) return
 
     // 日付グループ
     const month = item.date ? item.date.substring(0, 7) : 'その他'
@@ -149,7 +167,7 @@ const setMode = (mode: 'tag' | 'date') => {
   border-color: var(--vp-c-brand);
 }
 .memo-sidebar-content {
-  padding: 0 1rem;
+  padding: 0;
 }
 .memo-sidebar-section-title {
   margin: 1rem 0 0.5rem;
@@ -178,18 +196,38 @@ const setMode = (mode: 'tag' | 'date') => {
   list-style: none;
   padding: 0;
   margin: 0;
+  padding-left: 1.25rem;
 }
-.memo-sidebar-item {
-  margin: 4px 0;
-  padding-left: 0.5rem;
+
+/* VitePress 標準のスタイルを適用・微調整 */
+.VPSidebarItem.level-1 {
+  margin: 0;
 }
-.memo-sidebar-link {
-  font-size: 0.85rem;
-  color: var(--vp-c-text-1);
-  text-decoration: none;
-  transition: color 0.2s;
+.VPSidebarItem.level-1 .item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
-.memo-sidebar-link:hover {
-  color: var(--vp-c-brand);
+.VPSidebarItem.level-1 .indicator {
+  position: absolute;
+  left: -16px;
+  width: 2px;
+  height: 16px;
+  background-color: transparent;
+  transition: background-color 0.25s;
+}
+.VPSidebarItem.level-1 .link.active .indicator {
+  background-color: var(--vp-c-brand-1);
+}
+.VPSidebarItem.level-1 .text {
+  line-height: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+  transition: color 0.25s;
+}
+.VPSidebarItem.level-1 .link.active .text {
+  color: var(--vp-c-brand-1);
 }
 </style>

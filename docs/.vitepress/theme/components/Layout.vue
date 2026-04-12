@@ -28,8 +28,9 @@ const { Layout } = DefaultTheme
 </script>
 
 <style scoped>
-/* 「はじめに」（最初の項目）以外のデフォルトサイドバー項目を非表示にする */
-:deep(.VPSidebarItem.level-1:not(:first-child)) {
+/* デフォルトサイドバー直下にある「はじめに」以外の項目のみを非表示にする */
+/* CustomSidebar 内部の項目（孫要素）には影響を与えないよう直下指定(>)を使用 */
+:deep(.VPSidebarItem.level-0:first-child .VPSidebarItem.level-1:not(:first-child)) {
   display: none !important;
 }
 
