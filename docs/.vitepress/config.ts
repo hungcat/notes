@@ -34,7 +34,6 @@ export default defineConfigWithTheme<CustomThemeConfig>({
               // markdown-itは分割するとビルド時エラーが発生するため、分割しない
               if (id.includes('highlight.js')) return 'vendor-highlight';
               if (id.includes('minisearch')) return 'vendor-search';
-              if (id.includes('marked')) return 'vendor-marked';
             }
           }
         }
